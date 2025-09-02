@@ -1,0 +1,90 @@
+spring:
+  application:
+    name: ${NOMBRE_MICROSERVICIO:api9-demo-water-quality}
+  data:
+    mongodb:
+      uri: mongodb+srv://${MONGO_USERNAME:sistemajass}:${MONGO_PASSWORD:ZC7O1Ok40SwkfEje}@sistemajass.jn6cpoz.mongodb.net/${MONGO_DATABASE:JASS_DIGITAL}?retryWrites=true&w=majority
+  web:
+    resources:
+      cache:
+        period: 0
+  security: 
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/Prs-water-quality
+          jwk-set-uri: http://localhost:8080/realms/Prs-water-quality/protocol/openid-connect/certs
+
+server:
+  port: 8087
+  forward-headers-strategy: framework
+
+# 🛡️ CONFIGURACIÓN SEGURA POR AMBIENTE - API9:2023 PROTECTION
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: ${SWAGGER_ENABLED:true}  # ⚠️ En producción debe ser false
+    urls:
+      - url: /v3/api-docs
+        name: Water Quality API v2
+  api-docs:
+    path: /v3/api-docs
+    enabled: ${SWAGGER_ENABLED:true}  # ⚠️ En producción debe ser false
+  default-produces-media-type: application/json
+  paths-to-match: /api/**
+
+# 🔒 ACTUATOR RESTRINGIDO
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${ACTUATOR_ENDPOINTS:health,info}
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: ${HEALTH_DETAILS:when-authorized}
+    info:
+      enabled: true
+  info:
+    env:
+      enabled: true
+
+# 📊 CONFIGURACIÓN DE LA APLICACIÓN
+app:
+  name: API9 Demo - Water Quality Management
+  description: Demo de protecciones contra API9:2023 Improper Inventory Management
+  version: 1.0.0
+  environment: ${APP_ENVIRONMENT:development}  # 🎯 CLAVE PARA SEGURIDAD
+  
+# 🚨 CONFIGURACIÓN ESPECÍFICA PARA MITIGAR API9:2023
+api:
+  inventory:
+    enabled: ${API_INVENTORY_ENABLED:true}     # Solo true en desarrollo
+    auto-discovery: true
+    documentation-required: true
+    deprecated-warning: true
+  versioning:
+    strategy: header
+    header-name: API-Version
+    default-version: v2
+  security:
+    disable-debug-endpoints-in-production: true
+    require-auth-for-inventory: true
+    swagger-enabled-in-production: false
+
+# 📝 LOGGING PARA AUDITORÍA
+logging:
+  level:
+    pe.edu.vallegrande.api9demo: ${LOG_LEVEL:INFO}
+    org.springframework.security: ${SECURITY_LOG_LEVEL:WARN}
+    org.springframework.web: ${WEB_LOG_LEVEL:INFO}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# 🌐 CORS CONFIGURATION
+cors:
+  allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:8080}
+  allowed-methods: GET,POST,PUT,DELETE,PATCH,OPTIONS,HEAD
+  allowed-headers: "*"
+  allow-credentials: true
+  max-age: 3600

@@ -1,0 +1,65 @@
+version: "3.9"
+
+services:
+  # 🚀 Servicio principal - Demo API9:2023
+  api9-demo:
+    build: .
+    ports:
+      - "8087:8087"
+    environment:
+      # 🔧 Configuración por ambiente
+      - APP_ENVIRONMENT=${APP_ENVIRONMENT:-development}
+      - SWAGGER_ENABLED=${SWAGGER_ENABLED:-true}
+      - API_INVENTORY_ENABLED=${API_INVENTORY_ENABLED:-true}
+      
+      # 🗄️ Base de datos (opcional)
+      - MONGO_USERNAME=${MONGO_USERNAME:-sistemajass}
+      - MONGO_PASSWORD=${MONGO_PASSWORD:-ZC7O1Ok40SwkfEje}
+      - MONGO_DATABASE=${MONGO_DATABASE:-JASS_DIGITAL}
+      
+      # 📝 Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - SECURITY_LOG_LEVEL=${SECURITY_LOG_LEVEL:-WARN}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - api9-demo-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8087/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 📊 Prometheus para métricas (opcional)
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - api9-demo-network
+    profiles:
+      - monitoring
+
+  # 📈 Grafana para visualización (opcional)
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - api9-demo-network
+    profiles:
+      - monitoring
+
+networks:
+  api9-demo-network:
+    driver: bridge
+
+volumes:
+  grafana-data:
